@@ -43,5 +43,9 @@ scrapers/jdb:
   source: git@github.com:tmathmeyer/scrapers.jdb.git
   requires: scrapers
 
+scrapers/msdocs:
+  source: git@github.com:tmathmeyer/scrapers.msdocs.git
+  requires: scrapers
+
 xpp:
   source: git@github.com:tmathmeyer/xpp.git
