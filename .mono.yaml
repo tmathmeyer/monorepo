@@ -1,0 +1,50 @@
+chrome_archive_service:
+  source: git@github.com:tmathmeyer/chrome_archive_service.git
+
+base:
+  source: git@github.com:tmathmeyer/monorepo.git
+
+cppargs:
+  source: git@github.com:tmathmeyer/cppargs.git
+
+dotfiles:
+  source: git@github.com:tmathmeyer/dotfiles
+
+eu4_hacks:
+  source: git@github.com:tmathmeyer/eu4_hacks.git
+
+googletest:
+  source: git@github.com:tmathmeyer/googletest.git
+
+nginx_config_parser:
+  source: git@github.com:tmathmeyer/nginx_config_parser.git
+
+paste_service:
+  source: git@github.com:tmathmeyer/JankyPaste.git
+
+hatsuden:
+  source: git@github.com:tmathmeyer/hatsuden.git
+
+remarkable:
+  source: git@github.com:tmathmeyer/remarkable.git
+
+impulse:
+  source: git@github.com:tmathmeyer/impulse.git
+
+rules:
+  source: symlink://impulse/rules
+  requires: impulse
+
+scrapers:
+  source: git@github.com:tmathmeyer/scrapers.git
+
+scrapers/cs:
+  source: git@github.com:tmathmeyer/scrapers.cs.git
+  requires: scrapers
+
+scrapers/jdb:
+  source: git@github.com:tmathmeyer/scrapers.jdb.git
+  requires: scrapers
+
+xpp:
+  source: git@github.com:tmathmeyer/xpp.git
