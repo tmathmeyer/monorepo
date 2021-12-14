@@ -1,9 +1,6 @@
 chrome_archive_service:
   source: git@github.com:tmathmeyer/chrome_archive_service.git
 
-base:
-  source: git@github.com:tmathmeyer/monorepo.git
-
 cppargs:
   source: git@github.com:tmathmeyer/cppargs.git
 
