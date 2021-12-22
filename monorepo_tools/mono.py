@@ -19,6 +19,22 @@ def load_ignore():
     return set(x.strip() for x in f.readlines())
 
 
+def load_config():
+  with open(MONO_CONFIG) as f:
+    return yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+
+@command
+def status():
+  oldcwd = os.getcwd()
+  for key, value in load_config().items():
+    os.chdir(key)
+    print(key)
+    content = os.popen('git status --porcelain').read()
+    print('  ' + ('\n  '.join(content.split('\n'))))
+    os.chdir(oldcwd)
+
+
 @command
 def init():
   if os.path.exists(MONO_CONFIG):
@@ -48,24 +64,24 @@ def sync():
       os.system(f'echo {name} >> .gitignore')
       return True
     return False
-  with open(MONO_CONFIG) as f:
-    data = yaml.load(f.read(), Loader=yaml.SafeLoader)
-    this_round = set(data.keys())
-    finished_rules = set([None])
-    next_round = set()
-    unchanged = len(this_round) + 1
-    needs_commit = False
-    while len(this_round) != unchanged:
-      unchanged = len(this_round)
-      for key in this_round:
-        if data[key].get('requires', None) not in finished_rules:
-          next_round.add(key)
-        else:
-          needs_commit = process_rule(key, data[key]['source']) or needs_commit
-          finished_rules.add(key)
-      this_round = next_round
-    if needs_commit:
-      os.system('git add .gitignore && git commit -m "mono sync"')
+
+  data = load_config()
+  this_round = set(data.keys())
+  finished_rules = set([None])
+  next_round = set()
+  unchanged = len(this_round) + 1
+  needs_commit = False
+  while len(this_round) != unchanged:
+    unchanged = len(this_round)
+    for key in this_round:
+      if data[key].get('requires', None) not in finished_rules:
+        next_round.add(key)
+      else:
+        needs_commit = process_rule(key, data[key]['source']) or needs_commit
+        finished_rules.add(key)
+    this_round = next_round
+  if needs_commit:
+    os.system('git add .gitignore && git commit -m "mono sync"')
 
 
 def main():
