@@ -24,14 +24,36 @@ def load_config():
     return yaml.load(f.read(), Loader=yaml.SafeLoader)
 
 
+def indent(lines):
+  return '\n  '.join(lines).strip()
+
+
+def count(lines):
+  return len(lines)
+
+
+def eval_git_command(cmd, eval=indent):
+  lines = os.popen('git ' + cmd).read().strip().split('\n')
+  return eval([l for l in lines if l])
+
+
 @command
 def status():
   oldcwd = os.getcwd()
   for key, value in load_config().items():
     os.chdir(key)
-    print(key)
-    content = os.popen('git status --porcelain').read()
-    print('  ' + ('\n  '.join(content.split('\n'))))
+    eval_git_command('fetch')
+    ahead = eval_git_command('log --branches --not --remotes --oneline', count)
+    behind = eval_git_command('log --remotes --not --branches --oneline', count)
+    status = eval_git_command('status --porcelain')
+    if ahead or behind or status:
+      print(key)
+      print(f'  commits ahead: {ahead}')
+      print(f'  commits behind: {behind}')
+      if status:
+        print(f'  {status}')
+      else:
+        print('')
     os.chdir(oldcwd)
 
 

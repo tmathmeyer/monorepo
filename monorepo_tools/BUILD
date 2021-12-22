@@ -1,7 +1,6 @@
-
 langs("Python")
 
-py_binary(
+py_binary (
   name = "mono",
   srcs = [ "mono.py" ],
   deps = [
