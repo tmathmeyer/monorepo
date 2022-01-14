@@ -84,6 +84,7 @@ template<typename Return, typename Obj, typename... Args>
 struct MakeFunctorTraits<Return (Obj::*)(Args...)> {
   using RunType = Return(Obj*, Args...);
   using ReturnType = Return;
+  using ClassType = Obj;
 };
 
 // for functions
@@ -288,8 +289,6 @@ class RepeatingCallback<R(Args...)> {
   }
 
   R Run(Args... args) {
-    if (!invoker_)
-      return CallbackDefaultConstruct<R>::Construct();
     return invoker_->Invoke(std::forward<Args>(args)...);
   }
 
@@ -314,8 +313,6 @@ class OnceCallback<R(Args...)> {
   }
 
   R Run(Args... args) && {
-    if (!invoker_)
-      return CallbackDefaultConstruct<R>::Construct();
     return invoker_->Invoke(std::forward<Args>(args)...);
   }
 
@@ -367,6 +364,14 @@ inline OnceCallback<UnboundRunType<Functor>> BindOnce(
 
   return OnceCallback<UnboundRunType<Functor>>(std::move(invoker), loc);
 }
+
+template<typename S, typename P = typename MakeFunctorTraits<S>::ClassType>
+struct RepeatingBoundMatching {
+  using classless = RepeatingCallback<UnboundRunType<S, P>>;
+};
+
+using OnceClosure = OnceCallback<void()>;
+using RepeatingClosure = RepeatingCallback<void()>;
 
 }  // namespace base
 

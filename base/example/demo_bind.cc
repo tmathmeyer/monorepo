@@ -16,6 +16,10 @@ class Foo {
     printf("x+y = %i\n", y + x_);
   }
 
+  int Z() {
+    return x_;
+  }
+
  private:
   int x_;
 };
@@ -26,4 +30,9 @@ int main() {
 
   auto FooCB = base::BindOnce(&Foo::Blah);
   std::move(FooCB).Run(new Foo(1), 7);
+
+  Foo x(77);
+  base::RepeatingCallback<int()> ZCB = base::BindRepeating(&Foo::Z, &x);
+  int xx = ZCB.Run();
+  printf("%i\n", xx);
 }
