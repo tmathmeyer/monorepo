@@ -49,3 +49,6 @@ scrapers/msdocs:
 
 xpp:
   source: git@github.com:tmathmeyer/xpp.git
+
+api_core:
+  source: git@github.com:tmathmeyer/api_core.git

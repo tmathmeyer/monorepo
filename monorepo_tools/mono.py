@@ -69,6 +69,21 @@ def init():
 
 
 @command
+def new(repo:str, upstream:str=None):
+  if os.path.exists(repo):
+    raise ValueError(f'Subproject {repo} already exists!')
+  if not upstream:
+    os.system(f'mkdir -p {repo}')
+    os.system(f'cd {repo} && git init')
+    os.system(f'echo {repo} >> .gitignore')
+  else:
+    os.system(f'mkdir -p {repo}')
+    os.system(f'git clone {upstream} {repo}')
+  with open(MONO_CONFIG, 'a+') as f:
+    f.write(f'\n{repo}:\n  source: {upstream}\n')
+
+
+@command
 def sync():
   ignore_set = load_ignore()
   def process_rule(name, source) -> bool:
