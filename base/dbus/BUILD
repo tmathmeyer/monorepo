@@ -1,17 +1,21 @@
 langs("C")
 
-cpp_binary (
-  name = "demo_bind",
-  srcs = [ "demo_bind.cc" ],
-  deps = [ "//base:bind" ],
+cpp_header (
+  name = "dbus_h",
+  srcs = [ "dbus.h" ],
+  deps = [
+    "//base:json_h",
+  ],
 )
 
-cpp_binary (
-  name = "demo_dbus",
-  srcs = [ "demo_dbus.cc" ],
+cpp_object (
+  name = "dbus",
+  srcs = [ "dbus.cc", ],
   deps = [
-    "//base/dbus:dbus",
-    "//base/dbus:dbus_h",
+    ":dbus_h",
+    "//base:json_h",
+    "//base:check_h",
+    "//base:json",
   ],
   include_dirs = [
     "/usr/lib/dbus-1.0/include",

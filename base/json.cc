@@ -40,6 +40,8 @@ void Array::Append(Value&& value) {
 
 Value::Value(const Value& copy) {
   *this = copy.Clone();
+  if (traced_)
+    std::cout << "Copy to:  " << this << ": " << *this << "\n";
 }
 
 Value::Value(std::vector<Value>&& array) {
@@ -72,9 +74,12 @@ Value::Value(const Object& copy) {
   object_ = copy.Clone();
 }
 
-Value::Value(std::string str) {
+Value::Value(std::string str, bool traced) {
   type_ = Type::kString;
   string_ = str;
+  traced_ = traced;
+  if (traced)
+    std::cout << "Created:  " << this << ": " << str.c_str() << "\n";
 }
 
 Value::Value(const char* str) {
@@ -94,6 +99,12 @@ Value::Value(double floating) {
 
 Value::Value() {
   type_ = Type::kNull;
+}
+
+Value::~Value() {
+  if (traced_) {
+    std::cout << "Deleting: " << this << ": " << *this << "\n";
+  }
 }
 
 Array Value::AsArray() && {
@@ -121,7 +132,7 @@ std::string Value::AsString() && {
   return std::move(*string_);
 }
 
-const std::string& Value::AsString() const & {
+std::string Value::AsString() const & {
   CHECK_EQ(type_, Type::kString);
   return *string_;
 }
@@ -141,6 +152,10 @@ double Value::AsDouble() const {
   return *double_;
 }
 
+bool Value::IsNull() const {
+  return type_ == Type::kNull;
+}
+
 Value::Type Value::type() const {
   return type_;
 }
@@ -154,6 +169,7 @@ Value Value::Clone() const {
   result.array_ = array_;
   result.double_ = double_;
   result.integer_ = integer_;
+  result.traced_ = traced_;
   return result;
 }
 
@@ -242,6 +258,22 @@ void Value::WriteToStream(
       break;
     }
   }
+}
+
+const Value Value::operator[](int index) const {
+  const auto store = AsArray().store_;
+  if (index >= store.size())
+    return base::Value();
+  return store[index];
+}
+
+const Value Value::operator[](std::string key) const {
+  const auto store = AsObject().store_;
+  const auto itr = store.find(key);
+  if (itr == store.end())
+    return base::Value();
+  else
+    return itr->second;
 }
 
 

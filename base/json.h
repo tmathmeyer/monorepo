@@ -74,6 +74,7 @@ class Object {
   Object Clone() const;
 
  private:
+  friend class Value;
   std::map<std::string, Value> store_;
 };
 
@@ -88,6 +89,7 @@ class Array {
   Array Clone() const;
 
  private:
+  friend class Value;
   std::vector<Value> store_;
 };
 
@@ -111,28 +113,29 @@ class Value {
   }
 
   Value(const Value& copy);
-  Value(std::vector<Value>&&);
-  Value(Array&&);
-  Value(const Array&);
-  Value(std::map<std::string, Value>&&);
-  Value(Object&&);
-  Value(const Object&);
-  Value(std::string);
-  Value(const char*);
-  Value(bool);
-  Value(double);
+  explicit Value(std::vector<Value>&&);
+  explicit Value(Array&&);
+  explicit Value(const Array&);
+  explicit Value(std::map<std::string, Value>&&);
+  explicit Value(Object&&);
+  explicit Value(const Object&);
+  explicit Value(std::string, bool traced=false);
+  explicit Value(const char*);
+  explicit Value(bool);
+  explicit Value(double);
   Value();
-  ~Value() = default;
+  ~Value();
 
   Array AsArray() &&;
   const Array& AsArray() const &;
   Object AsObject() &&;
   const Object& AsObject() const &;
   std::string AsString() &&;
-  const std::string& AsString() const &;
+  std::string AsString() const &;
   bool AsBool() const;
   ssize_t AsInteger() const;
   double AsDouble() const;
+  bool IsNull() const;
 
   Value Clone() const;
 
@@ -140,6 +143,9 @@ class Value {
 
   void WriteToStream(std::ostream& stream,
                      std::optional<int> indent=std::nullopt) const;
+
+  const base::Value operator[](int index) const;
+  const base::Value operator[](std::string key) const;
 
   template<typename T>
   static Value Parse(ReaderStream<T>* stream) {
@@ -343,6 +349,7 @@ class Value {
   std::optional<double> double_;
   std::optional<ssize_t> integer_;
   Type type_;
+  bool traced_ = false;
 };
 
 std::ostream& operator<<(std::ostream&, const Value&);
