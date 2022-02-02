@@ -47,6 +47,10 @@ scrapers/msdocs:
   source: git@github.com:tmathmeyer/scrapers.msdocs.git
   requires: scrapers
 
+scrapers/upc:
+  source: git@github.com:tmathmeyer/upc_scraping.git
+  requires: scrapers
+
 xpp:
   source: git@github.com:tmathmeyer/xpp.git
 
