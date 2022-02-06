@@ -1,4 +1,8 @@
+# untracked, but still ignored things
+wip
 GENERATED
+
+# Tracked in .mono.yaml
 dotfiles
 impulse
 scrapers
