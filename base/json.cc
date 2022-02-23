@@ -242,15 +242,15 @@ void Value::WriteToStream(
       break;
     }
     case Value::Type::kBoolean: {
-      stream << AsBool();
+      stream << (AsBool() ? "True" : "False");
       break;
     }
     case Value::Type::kInteger: {
-      stream << AsInteger();
+      stream << "i" << AsInteger();
       break;
     }
     case Value::Type::kFloating: {
-      stream << AsDouble();
+      stream << "f" << AsDouble();
       break;
     }
     case Value::Type::kNull: {

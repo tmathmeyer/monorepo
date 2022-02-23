@@ -11,7 +11,7 @@ cpp_binary (
   srcs = [ "demo_dbus.cc" ],
   deps = [
     "//base/dbus:dbus",
-    "//base/dbus:dbus_h",
+    "//base/dbus:dbus_headers",
   ],
   include_dirs = [
     "/usr/lib/dbus-1.0/include",

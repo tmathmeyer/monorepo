@@ -96,13 +96,13 @@ class Array {
 class Value {
  public:
   enum class Type {
-    kString,
-    kObject,
-    kArray,
-    kBoolean,
-    kInteger,
-    kFloating,
-    kNull,
+    kString = 1,
+    kObject = 2,
+    kArray = 3,
+    kBoolean = 4,
+    kInteger = 5,
+    kFloating = 6,
+    kNull = 7,
   };
 
   template<typename T,

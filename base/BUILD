@@ -1,6 +1,11 @@
 langs("C")
 
 cpp_header (
+  name = "tuple_h",
+  srcs = [ "tuple.h", ],
+)
+
+cpp_header (
   name = "location_h",
   srcs = [ "location.h" ],
 )

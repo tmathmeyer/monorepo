@@ -10,113 +10,221 @@
 
 #include <dbus/dbus.h>
 
-#include "base/json.h"
+#include "base/tuple.h"
+#include "base/json/json.h"
+#include "base/json/json_rectify.h"
+#include "base/dbus/dbus_parser.h"
+
 
 namespace base {
 namespace dbus {
 
-class Namespace;
-class Object;
-class Interface;
+// Helper namespace for unpacking c++ arg syntax into DBUS arg syntax
+namespace {
 
+template<typename T> struct DBusType { };
+template<> struct DBusType<char const*> {
+  static const char Value = 's';
+};
+
+template<typename... T>
+bool AppendArgs(T... t, DBusMessage* msg) {
+  return dbus_message_append_args(msg, t..., DBUS_TYPE_INVALID);
+}
+
+template<typename F, typename... U, typename... T>
+bool AppendArgs(T... t, DBusMessage* msg, F f, U... u) {
+  return AppendArgs<char, F*, T..., U...>(
+    DBusType<F>::Value, &f, msg, u...);
+}
+
+}  // namespace
+
+// Forward declare
+class ObjectProxy;
+
+// The underlying connection object for which all proxies ultimately talk to.
 class Connection : public std::enable_shared_from_this<Connection> {
  public:
-  static std::optional<std::shared_ptr<Connection>> GetSystemConnection();
+  static std::shared_ptr<Connection> GetSystemConnection();
 
-  // Gets all the namespaces available.
-  std::map<std::string, std::shared_ptr<Namespace>> GetAllNamespaces();
+  template<typename T>
+  typename std::unique_ptr<T> GetInterface(std::string ns, std::string path) {
+    ObjectProxy proxy(shared_from_this(), ns, path);
+    return T::CreateFromProxy(proxy);
+  }
 
-  // Gets a namespace by name
-  std::shared_ptr<Namespace> GetNamespace(std::string name);
 
  private:
-  friend class Namespace;
+  friend class ObjectProxy;
 
   // Private constructor - only access via static initializer.
   explicit Connection(DBusConnection* connection);
 
-  std::optional<base::Value> CallMethod(
-    std::string ns, std::string obj, std::string iface, std::string method);
+  // Calls a method
+  template<typename ... Args>
+  base::json::JSON CallMethod(std::string ns,
+                              std::string obj,
+                              std::string iface,
+                              std::string method,
+                              Args ... args) {
+    DBusMessage *msg = dbus_message_new_method_call(
+    ns.c_str(), obj.c_str(), iface.c_str(), method.c_str());
+    if (!msg)
+      return {};
+    if (!AppendArgs(msg, args...))
+      return {};
+    DBusPendingCall *pending;
+    if (!dbus_connection_send_with_reply(connection_, msg, &pending, -1))
+      return {};
+    if (!pending)
+      return {};
+    dbus_connection_flush(connection_);
+    dbus_message_unref(msg);
+    dbus_pending_call_block(pending);
+    msg = dbus_pending_call_steal_reply(pending);
+    if (!msg)
+      return {};
+    dbus_pending_call_unref(pending);
+    auto result = DecodeMessageReply(msg);
+    dbus_message_unref(msg);
+    return result;
+  }
 
   DBusConnection *connection_;
 };
 
+namespace {
 
-class Namespace : public std::enable_shared_from_this<Namespace> {
+template<typename T>
+using Name = std::string;
+
+template<typename T>
+struct Types {
+  using Json = std::string;
+  using Proxy = T;
+};
+
+template<>
+struct Types<std::string> {
+  using Json = std::string;
+  using Proxy = Json;
+};
+
+template<>
+struct Types<bool> {
+  using Json = bool;
+  using Proxy = Json;
+};
+
+template<>
+struct Types<ssize_t> {
+  using Json = ssize_t;
+  using Proxy = Json;
+};
+
+template<>
+struct Types<double> {
+  using Json = double;
+  using Proxy = Json;
+};
+
+template<typename ...T>
+struct Binder {};
+
+template<typename F, typename... R>
+struct Binder<F, R...> {
+  static std::tuple<typename Types<F>::Proxy,
+                    typename Types<R>::Proxy...> Bind(
+      std::shared_ptr<Connection> conn, std::string ns,
+      std::tuple<typename Types<F>::Json,
+                 typename Types<R>::Json...> pack) {
+    auto first = std::get<0>(pack);
+    auto rest = base::MetaTuple<typename Types<F>::Json,
+                                typename Types<R>::Json...>::Rest(
+                                  std::move(pack));
+    auto recurse = Binder<R...>::Bind(conn, ns, std::move(rest));
+    if constexpr (std::is_same_v<F, typename Types<F>::Json>) {
+      return std::tuple_cat(
+        std::make_tuple<typename Types<F>::Proxy>(std::move(first)),
+        std::move(recurse));
+    } else {
+      auto storage =
+        std::make_tuple<typename Types<F>::Proxy>(
+          std::make_unique<ObjectProxy>(conn, ns, std::move(first)));
+      return std::tuple_cat(
+        std::move(storage),
+        std::move(recurse));
+    }
+  }
+};
+
+template<>
+struct Binder<> {
+  static std::tuple<> Bind(std::shared_ptr<Connection> conn,
+                           std::string ns, std::tuple<> pack) {
+    return pack;
+  }
+};
+
+template<typename T, typename... Args>
+std::unique_ptr<T> Instantiate(Args&&... args) {
+  return std::make_unique<T>(std::forward<Args>(args)...);
+}
+
+}  // namespace
+
+
+class ObjectProxy {
  public:
-  std::string GetName() const { return name_; }
+  using Storage = std::unique_ptr<ObjectProxy>;
 
-  // Gets all the objects available.
-  std::map<std::string, std::shared_ptr<Object>> GetAllObjects();
+  ObjectProxy(std::shared_ptr<Connection> conn, std::string ns,
+              std::string path);
 
-  // Gets a object by path
-  std::shared_ptr<Object> GetObject(std::string path);
+  template<typename T, typename... Args>
+  std::unique_ptr<T> Create(Name<Args>... args) const {
+    base::json::JSON properties = connection_->CallMethod(
+      ns_, path_, "org.freedesktop.DBus.Properties", "GetAll",
+      T::GetTypeName());
+
+    if (base::json::IsNull(properties))
+      return nullptr;
+
+    auto object = base::json::Unpack<base::json::Object>(std::move(properties));
+    if (!object)
+      return nullptr;
+
+    auto rectified = base::json::Rectify<typename Types<Args>::Json...>(
+      *object, args...);
+
+    if (!rectified.has_value())
+      return nullptr;
+
+    std::tuple<Args...> bound = Binder<Args...>::Bind(
+      connection_, ns_, std::move(rectified).value());
+
+    using SelfType = std::unique_ptr<ObjectProxy>;
+    auto tup = std::make_tuple<SelfType>(
+      std::make_unique<ObjectProxy>(connection_, ns_, path_));
+
+    return std::apply(
+      Instantiate<T, SelfType, Args...>,
+      std::tuple_cat(std::move(tup), std::move(bound)));
+  }
 
  private:
   friend class Connection;
-  friend class Object;
 
-  std::optional<base::Value> CallMethod(
-    std::string obj, std::string iface, std::string method);
-
-  // Private constructor accessable from Connection only
-  Namespace(std::string name, std::shared_ptr<Connection>);
-
-  std::string name_;
   std::shared_ptr<Connection> connection_;
-};
-
-
-class Object : public std::enable_shared_from_this<Object> {
- public:
-  std::string GetPath() { return path_; }
-
-  // Gets all the interfaces available.
-  std::map<std::string, std::shared_ptr<Interface>> GetAllInterfaces();
-
-  // Gets a interface by name
-  std::shared_ptr<Interface> GetInterface(std::string name);
-
- private:
-  friend class Namespace;
-  friend class Interface;
-
-  std::optional<base::Value> CallMethod(std::string iface, std::string method);
-
-  Object(std::string path, std::shared_ptr<Namespace>);
-
+  std::string ns_;
   std::string path_;
-  std::shared_ptr<Namespace> namespace_;
-};
-
-class Interface : std::enable_shared_from_this<Interface> {
- public:
-  std::string GetName() { return name_; };
-
-  std::optional<base::Value> CallMethod(std::string method);
-
- private:
-  friend class Object;
-
-  Interface(std::string name, std::shared_ptr<Object>);
-
-  std::string name_;
-  std::shared_ptr<Object> object_;
-};
-
-class Method {
-
-};
-
-class Property {
-
-};
-
-class Signal {
-
 };
 
 }  // namespace dbus
 }  // namespace base
+
+
+std::ostream& operator<<(std::ostream& os, const std::unique_ptr<base::dbus::ObjectProxy>& pr);
 
 #endif  // ifndef BASE_DBUS_DBUS_H_
