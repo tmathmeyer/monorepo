@@ -6,20 +6,23 @@ namespace json {
 
 namespace {
 
-#define INDENT(_i) do {      \
-  if(_i) {                   \
-    for(int _=0;_<*_i;_++) { \
-      stream << " ";         \
-    }                        \
-  }                          \
-} while(0)
+#define INDENT(_i)                    \
+  do {                                \
+    if (_i) {                         \
+      for (int _ = 0; _ < *_i; _++) { \
+        stream << "  ";               \
+      }                               \
+    }                                 \
+  } while (0)
 
-void WriteToStream(std::ostream& stream, const JSON& json,
+void WriteToStream(std::ostream& stream,
+                   const JSON& json,
                    std::optional<int> indent);
 
-void WriteToStream(std::ostream& stream, const Object& value,
+void WriteToStream(std::ostream& stream,
+                   const Object& value,
                    std::optional<int> indent) {
-  std::optional<int> p1 = indent ? *indent+1 : indent;
+  std::optional<int> p1 = indent ? *indent + 1 : indent;
   stream << "{";
   if (indent.has_value())
     stream << "\n";
@@ -42,9 +45,10 @@ void WriteToStream(std::ostream& stream, const Object& value,
   stream << "}";
 }
 
-void WriteToStream(std::ostream& stream, const Array& value,
+void WriteToStream(std::ostream& stream,
+                   const Array& value,
                    std::optional<int> indent) {
-  std::optional<int> p1 = indent ? *indent+1 : indent;
+  std::optional<int> p1 = indent ? *indent + 1 : indent;
   stream << "[";
   if (indent.has_value())
     stream << "\n";
@@ -68,57 +72,62 @@ void WriteToStream(std::ostream& stream, const Array& value,
 
 #undef INDENT
 
-void WriteToStream(std::ostream& stream, const JSON& json,
+void WriteToStream(std::ostream& stream,
+                   const JSON& json,
                    std::optional<int> indent) {
-  std::visit([&stream, indent](const auto& arg) {
-    using T = std::decay_t<decltype(arg)>;
-    if constexpr (std::is_same_v<T, std::string>) {
-      stream << "\"" << arg << "\"";
-    } else if constexpr (std::is_same_v<T, std::monostate>) {
-      stream << "null";
-    } else if constexpr (std::is_same_v<T, bool>) {
-      stream << (arg ? "true" : "false");
-    } else if constexpr (std::is_same_v<T, ssize_t>) {
-      stream << arg;
-    } else if constexpr (std::is_same_v<T, double>) {
-      stream << arg;
-    } else if constexpr (std::is_same_v<T, Object>) {
-      WriteToStream(stream, arg, indent);
-    } else if constexpr (std::is_same_v<T, Array>) {
-      WriteToStream(stream, arg, indent);
-    }
-  }, json);
+  std::visit(
+      [&stream, indent](const auto& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+          stream << "\"" << arg << "\"";
+        } else if constexpr (std::is_same_v<T, std::monostate>) {
+          stream << "null";
+        } else if constexpr (std::is_same_v<T, bool>) {
+          stream << (arg ? "true" : "false");
+        } else if constexpr (std::is_same_v<T, ssize_t>) {
+          stream << arg;
+        } else if constexpr (std::is_same_v<T, double>) {
+          stream << arg;
+        } else if constexpr (std::is_same_v<T, Object>) {
+          WriteToStream(stream, arg, indent);
+        } else if constexpr (std::is_same_v<T, Array>) {
+          WriteToStream(stream, arg, indent);
+        }
+      },
+      json);
 }
 
 }  // namespace
 
 std::ostream& operator<<(std::ostream& stream, const JSON& value) {
-  std::visit([&stream](const auto& arg) {
-    using T = std::decay_t<decltype(arg)>;
-    if constexpr (std::is_same_v<T, std::string>) {
-      stream << "\"" << arg << "\"";
-    } else if constexpr (std::is_same_v<T, std::monostate>) {
-      stream << "null";
-    } else if constexpr (std::is_same_v<T, bool>) {
-      stream << (arg ? "true" : "false");
-    } else if constexpr (std::is_same_v<T, Array>) {
-      WriteToStream(stream, arg, 2);
-    } else if constexpr (std::is_same_v<T, Object>) {
-      WriteToStream(stream, arg, 2);
-    }
-  }, value);
+  std::visit(
+      [&stream](const auto& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_same_v<T, std::string>) {
+          stream << "\"" << arg << "\"";
+        } else if constexpr (std::is_same_v<T, std::monostate>) {
+          stream << "null";
+        } else if constexpr (std::is_same_v<T, bool>) {
+          stream << (arg ? "true" : "false");
+        } else if constexpr (std::is_same_v<T, Array>) {
+          WriteToStream(stream, arg, 0);
+        } else if constexpr (std::is_same_v<T, Object>) {
+          WriteToStream(stream, arg, 0);
+        }
+      },
+      value);
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Object& value) {
-  WriteToStream(stream, value, 2);
+  WriteToStream(stream, value, 0);
   return stream;
 }
 
 std::ostream& operator<<(std::ostream& stream, const Array& value) {
-  WriteToStream(stream, value, 2);
+  WriteToStream(stream, value, 0);
   return stream;
 }
 
-}
-}
+}  // namespace json
+}  // namespace base

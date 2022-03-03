@@ -12,30 +12,38 @@
 namespace base {
 namespace json {
 
+using Number = ssize_t;
+using Float = double;
+
 class Object;
 class Array;
 
 using JSON = std::variant<std::monostate,  // js "None"
-                         Object,
-                         Array,
-                         std::string,
-                         ssize_t,
-                         double,
-                         bool>;
+                          Object,
+                          Array,
+                          std::string,
+                          Number,
+                          Float,
+                          bool>;
 
 bool IsNull(const JSON&);
+bool IsObject(const JSON&);
+bool IsArray(const JSON&);
+bool IsString(const JSON&);
+bool IsBool(const JSON&);
+bool IsInteger(const JSON&);
+bool IsFloating(const JSON&);
 
 JSON Copy(const JSON&);
 Array Copy(const Array&);
 Object Copy(const Object&);
 
-template<typename T>
+template <typename T>
 std::optional<T> Unpack(JSON&& json) {
   if (std::holds_alternative<T>(json))
     return std::get<T>(std::move(json));
   return std::nullopt;
 }
-
 
 class Object {
  public:
@@ -57,13 +65,13 @@ class Object {
   MapType content_;
 };
 
-
 class Array {
  public:
   Array(std::vector<JSON>&&);
   const std::vector<JSON>& Values() const;
   std::vector<JSON> unwrap() &&;
   size_t size() const;
+  Array Cdr() &&;
 
   JSON operator[](size_t index) const;
 
@@ -76,7 +84,7 @@ class Array {
   std::vector<JSON> content_;
 };
 
-}
-}
+}  // namespace json
+}  // namespace base
 
 #endif  // BASE_JSON_JSON_H_

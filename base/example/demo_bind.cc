@@ -1,6 +1,6 @@
 
 #include <stdio.h>
-#include "base/bind.h"
+#include "base/bind/bind.h"
 
 int x(int a, int b, int c, std::unique_ptr<int> d) {
   printf("a = %i, b = %i, c = %i\n", a, b, c + *d);
@@ -9,16 +9,12 @@ int x(int a, int b, int c, std::unique_ptr<int> d) {
 
 class Foo {
  public:
-  Foo(int x) {x_ = x;}
+  Foo(int x) { x_ = x; }
   ~Foo() {}
 
-  void Blah(int y) {
-    printf("x+y = %i\n", y + x_);
-  }
+  void Blah(int y) { printf("x+y = %i\n", y + x_); }
 
-  int Z() {
-    return x_;
-  }
+  int Z() { return x_; }
 
  private:
   int x_;

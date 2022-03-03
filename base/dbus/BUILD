@@ -7,8 +7,14 @@ cpp_header (
     "dbus_parser.h",
   ],
   deps = [
-    "//base:tuple_h",
+    "//base:tuple",
     "//base/json:json_headers",
+  ],
+  include_dirs = [
+    "/usr/lib/dbus-1.0/include",
+    "/usr/include/dbus-1.0",
+    "/usr/include/glib-2.0",
+    "/usr/lib/glib-2.0/include",
   ],
 )
 
@@ -23,17 +29,6 @@ cpp_object (
     "//base/json:json",
     "//base/json:json_io",
   ],
-  include_dirs = [
-    "/usr/lib/dbus-1.0/include",
-    "/usr/include/dbus-1.0",
-    "/usr/include/glib-2.0",
-    "/usr/lib/glib-2.0/include",
-  ],
-  flags = [
-    "-ldbus-glib-1",
-    "-ldbus-1",
-    "-lglib-2.0",
-  ],
 )
 
 cpp_object (
@@ -45,12 +40,6 @@ cpp_object (
     ":dbus_headers",
     "//base/json:json",
     "//base/json:json_io",
-  ],
-  include_dirs = [
-    "/usr/lib/dbus-1.0/include",
-    "/usr/include/dbus-1.0",
-    "/usr/include/glib-2.0",
-    "/usr/lib/glib-2.0/include",
   ],
   flags = [
     "-ldbus-glib-1",

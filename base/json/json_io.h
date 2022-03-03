@@ -11,7 +11,7 @@ std::ostream& operator<<(std::ostream&, const JSON&);
 std::ostream& operator<<(std::ostream&, const Object&);
 std::ostream& operator<<(std::ostream&, const Array&);
 
-}
-}
+}  // namespace json
+}  // namespace base
 
 #endif  // BASE_JSON_JSON_IO_H_

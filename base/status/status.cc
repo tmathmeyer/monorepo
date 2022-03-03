@@ -1,9 +1,6 @@
-#include "status.h"
+#include "base/status/status.h"
 
 #include <memory>
-
-#include "serialize_base.h"
-#include "serialize.h"
 
 namespace base {
 
@@ -18,18 +15,12 @@ StatusData::StatusData(const StatusData& copy) {
 StatusData::StatusData(StatusGroupType group,
                        StatusCodeType code,
                        std::string message)
-    : group(group),
-      code(code),
-      message(std::move(message)),
-      data(Object()) {}
+    : group(group), code(code), message(std::move(message)) {}
 
 std::unique_ptr<StatusData> StatusData::copy() const {
   auto result = std::make_unique<StatusData>(group, code, message);
   for (const auto& frame : frames)
-    result->frames.push_back(frame.Clone());
-  for (const auto& cause : causes)
-    result->causes.push_back(cause);
-  result->data = data.Clone();
+    result->frames.push_back(frame);
   return result;
 }
 
@@ -40,15 +31,12 @@ StatusData& StatusData::operator=(const StatusData& copy) {
   code = copy.code;
   message = copy.message;
   for (const auto& frame : copy.frames)
-    frames.push_back(frame.Clone());
-  for (const auto& cause : copy.causes)
-    causes.push_back(cause);
-  data = copy.data.Clone();
+    frames.push_back(frame);
   return *this;
 }
 
 void StatusData::AddLocation(const base::Location& location) {
-  frames.push_back(Serialize(location));
+  frames.push_back(location);
 }
 
 }  // namespace internal

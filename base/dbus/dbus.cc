@@ -10,7 +10,7 @@ namespace dbus {
 std::shared_ptr<Connection> Connection::GetSystemConnection() {
   DBusError err;
   dbus_error_init(&err);
-  DBusConnection *connection = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
+  DBusConnection* connection = dbus_bus_get(DBUS_BUS_SYSTEM, &err);
   if (dbus_error_is_set(&err)) {
     fprintf(stderr, "Connection Error (%s)\n", err.message);
     dbus_error_free(&err);
@@ -22,17 +22,17 @@ std::shared_ptr<Connection> Connection::GetSystemConnection() {
 
 Connection::Connection(DBusConnection* connection) : connection_(connection) {}
 
-
-ObjectProxy::ObjectProxy(std::shared_ptr<Connection> conn, std::string ns,
-                         std::string path)
-    : connection_(std::move(conn)),
-      ns_(ns),
-      path_(path) {}
+ObjectProxy::ObjectProxy(std::shared_ptr<Connection> conn,
+                         std::string ns,
+                         std::string path,
+                         std::optional<std::string> iface)
+    : connection_(std::move(conn)), ns_(ns), path_(path), iface_(iface) {}
 
 }  // namespace dbus
 }  // namespace base
 
-std::ostream& operator<<(std::ostream& os, const std::unique_ptr<base::dbus::ObjectProxy>& pr) {
+std::ostream& operator<<(std::ostream& os,
+                         const std::unique_ptr<base::dbus::ObjectProxy>& pr) {
   os << "[ObjectProxy]";
   return os;
 }

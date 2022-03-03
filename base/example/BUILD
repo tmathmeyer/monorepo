@@ -3,7 +3,7 @@ langs("C")
 cpp_binary (
   name = "demo_bind",
   srcs = [ "demo_bind.cc" ],
-  deps = [ "//base:bind" ],
+  deps = [ "//base/bind:bind" ],
 )
 
 cpp_binary (
@@ -23,5 +23,15 @@ cpp_binary (
     "-ldbus-glib-1",
     "-ldbus-1",
     "-lglib-2.0",
+  ],
+)
+
+cpp_binary (
+  name = "json_tests",
+  srcs = [ "json_tests.cc" ],
+  deps = [
+    "//base/json:json",
+    "//base/json:json_headers",
+    "//base:tuple",
   ],
 )

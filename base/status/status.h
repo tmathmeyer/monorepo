@@ -1,16 +1,15 @@
-#ifndef BASE_STATUS_H_
-#define BASE_STATUS_H_
+#ifndef BASE_STATUS_STATUS_H_
+#define BASE_STATUS_STATUS_H_
 
-#include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
-#include "json.h"
-#include "location.h"
-#include "serialize_base.h"
+#include "base/check.h"
+#include "base/location.h"
 
 namespace base {
 
@@ -31,9 +30,7 @@ struct StatusData {
   std::string group;
   StatusCodeType code;
   std::string message;
-  std::vector<Value> frames;
-  std::vector<StatusData> causes;
-  Object data;
+  std::vector<Location> frames;
 };
 
 template <typename T>
@@ -74,14 +71,12 @@ class TypedStatus {
   TypedStatus(Codes code,
               std::string message = "",
               const Location& location = Location::Current()) {
-    
     if (code == internal::StatusTraitsHelper<T>::DefaultEnumValue()) {
       CHECK(!!message.empty());
       return;
     }
     data_ = std::make_unique<internal::StatusData>(
-        T::Group(), static_cast<StatusCodeType>(code),
-        std::string(message));
+        T::Group(), static_cast<StatusCodeType>(code), std::string(message));
     data_->AddLocation(location);
   }
 
@@ -102,33 +97,16 @@ class TypedStatus {
     return static_cast<Codes>(data_->code);
   }
 
-  const std::string group() const {
-    return data_ ? data_->group : T::Group();
-  }
+  const std::string group() const { return data_ ? data_->group : T::Group(); }
 
   const std::string& message() const {
     CHECK(data_);
     return data_->message;
   }
-  
-  TypedStatus<T>&& AddHere(
-      const Location& location = Location::Current()) && {
+
+  TypedStatus<T>&& AddHere(const Location& location = Location::Current()) && {
     CHECK(data_);
     data_->AddLocation(location);
-    return std::move(*this);
-  }
-
-  template <typename D>
-  TypedStatus<T>&& WithData(const char* key, const D& value) && {
-    CHECK(data_);
-    data_->data.SetKey(key, Serialize(value));
-    return std::move(*this);
-  }
-
-  template <typename AnyTraitsType>
-  TypedStatus<T>&& AddCause(TypedStatus<AnyTraitsType>&& cause) && {
-    CHECK(data_ && cause.data_);
-    data_->causes.push_back(*cause.data_);
     return std::move(*this);
   }
 
@@ -150,18 +128,15 @@ class TypedStatus {
     ~Or() = default;
     Or(TypedStatus<T>&& error) : error_(std::move(error)) {
       CHECK(!internal::StatusTraitsHelper<T>::DefaultEnumValue() ||
-            *internal::StatusTraitsHelper<T>::DefaultEnumValue() !=
-                 code());
+            *internal::StatusTraitsHelper<T>::DefaultEnumValue() != code());
     }
     Or(const TypedStatus<T>& error) : error_(error) {
       CHECK(!internal::StatusTraitsHelper<T>::DefaultEnumValue() ||
-            *internal::StatusTraitsHelper<T>::DefaultEnumValue() !=
-                 code());
+            *internal::StatusTraitsHelper<T>::DefaultEnumValue() != code());
     }
 
     Or(OtherType&& value) : value_(std::move(value)) {}
-    Or(typename T::Codes code,
-       const Location& location = Location::Current())
+    Or(typename T::Codes code, const Location& location = Location::Current())
         : error_(TypedStatus<T>(code, "", location)) {
       CHECK(!internal::StatusTraitsHelper<T>::DefaultEnumValue() ||
             *internal::StatusTraitsHelper<T>::DefaultEnumValue() != code);
@@ -196,8 +171,9 @@ class TypedStatus {
     }
 
     typename T::Codes code() const {
-      CHECK(error_ || (
-        value_ && internal::StatusTraitsHelper<Traits>::DefaultEnumValue()));
+      CHECK(
+          error_ ||
+          (value_ && internal::StatusTraitsHelper<Traits>::DefaultEnumValue()));
       return error_ ? error_->code()
                     : *internal::StatusTraitsHelper<Traits>::DefaultEnumValue();
     }
@@ -212,9 +188,6 @@ class TypedStatus {
 
   template <typename StatusEnum>
   friend class TypedStatus;
-
-  template<typename Any>
-  friend struct Serializer;
 };
 
 template <typename T>
@@ -229,4 +202,4 @@ inline bool operator!=(typename T::Codes code, const TypedStatus<T>& status) {
 
 }  // namespace base
 
-#endif  // BASE_STATUS_H_
+#endif  // BASE_STATUS_STATUS_H_
