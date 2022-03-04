@@ -105,7 +105,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
       return;
     DBusError err;
     dbus_error_init(&err);
-    dbus_connection_send_with_reply_and_block(connection_, msg, -1, &err);
+    DBusMessage* response =
+        dbus_connection_send_with_reply_and_block(connection_, msg, -1, &err);
     if (dbus_error_is_set(&err)) {
       fprintf(stderr, "Connection Error (%s)\n", err.message);
       dbus_error_free(&err);
@@ -113,6 +114,8 @@ class Connection : public std::enable_shared_from_this<Connection> {
     }
     dbus_connection_flush(connection_);
     dbus_message_unref(msg);
+    dbus_error_free(&err);
+    dbus_message_unref(response);
   }
 
   DBusConnection* connection_;
@@ -350,7 +353,7 @@ class ObjectProxy {
 
     using SelfType = std::unique_ptr<ObjectProxy>;
     auto tup = std::make_tuple<SelfType>(std::make_unique<ObjectProxy>(
-        connection_, ns_, path_, T::GetTypeName()));
+        std::move(connection_), ns_, path_, T::GetTypeName()));
 
     return std::apply(Instantiate<T, SelfType, Args...>,
                       std::tuple_cat(std::move(tup), std::move(bound)));

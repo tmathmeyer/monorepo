@@ -82,7 +82,9 @@ base::json::JSON DecodeType(int type, DBusMessageIter* args) {
 
 base::json::JSON UnpackVariant(DBusMessageIter* args) {
   char* sig = dbus_message_iter_get_signature(args);
-  return DecodeType(sig[0], args);
+  base::json::JSON result = DecodeType(sig[0], args);
+  free(sig);
+  return std::move(result);
 }
 
 base::json::Object CombineKeys(base::json::Array&& values) {
