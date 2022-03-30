@@ -12,7 +12,7 @@ cppargs
 eu4_hacks
 chrome_archive_service
 remarkable
-nginx_config_parser
+nginx
 hatsuden
 scrapers/cs
 scrapers/jdb
@@ -24,3 +24,4 @@ iwgui
 tint4
 getmyancestors
 dashe
+nginx_docker_bridge

@@ -10,7 +10,7 @@ eu4_hacks:
 googletest:
   source: git@github.com:tmathmeyer/googletest.git
 
-nginx_config_parser:
+nginx:
   source: git@github.com:tmathmeyer/nginx_config_parser.git
 
 paste_service:
@@ -53,3 +53,7 @@ xpp:
 
 api_core:
   source: git@github.com:tmathmeyer/api_core.git
+
+nginx_docker_bridge:
+  source: git@github.com:tmathmeyer/nginx_docker_bridge.git
+  requires: nginx,api_core
