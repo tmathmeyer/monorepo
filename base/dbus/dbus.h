@@ -210,6 +210,8 @@ struct Binder<> {
   static std::tuple<> Bind(std::shared_ptr<Connection> conn,
                            std::string ns,
                            std::tuple<> pack) {
+    std::ignore = conn;
+    std::ignore = ns;
     return pack;
   }
 };
@@ -238,6 +240,7 @@ struct ProxyDeconstructor<std::tuple<>> {
   using RawType = std::tuple<>;
   static std::optional<std::tuple<>> Reconstruct(const ProxyPack& src,
                                                  RawType&& input) {
+    std::ignore = src;
     return std::move(input);
   }
 };

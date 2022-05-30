@@ -57,3 +57,6 @@ api_core:
 nginx_docker_bridge:
   source: git@github.com:tmathmeyer/nginx_docker_bridge.git
   requires: nginx,api_core
+
+savescum:
+  source: git@github.com:tmathmeyer/savescum.git

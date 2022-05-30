@@ -53,6 +53,7 @@ inline optional<tuple<F, T...>> Rectify(const Object& o,
 
 template <>
 inline optional<tuple<>> Rectify(const Object& o) {
+  std::ignore = o;
   return tuple<>();
 }
 
