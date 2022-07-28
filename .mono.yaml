@@ -60,3 +60,6 @@ nginx_docker_bridge:
 
 savescum:
   source: git@github.com:tmathmeyer/savescum.git
+
+xpp_inherit:
+  source: git@github.com:tmathmeyer/xpp_inherit.git
