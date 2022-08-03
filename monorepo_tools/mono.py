@@ -90,9 +90,11 @@ def sync():
     if source.startswith('git@'):
       if not os.path.exists(name):
         os.system(f'git clone {source} {name}')
-      elif eval_git_command('log --remotes --not --branches --oneline'):
-        if not eval_git_command('status --porcelain'):
-          os.system('git pull --rebase')
+      else:
+        os.system('git fetch')
+        if eval_git_command('log --remotes --not --branches --oneline'):
+          if not eval_git_command('status --porcelain'):
+            os.system('git pull --rebase')
     elif source.startswith('symlink://'):
       if not os.path.exists(name):
         os.system(f'ln -s {source[10:]} {name}')
