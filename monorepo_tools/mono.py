@@ -91,10 +91,20 @@ def sync():
       if not os.path.exists(name):
         os.system(f'git clone {source} {name}')
       else:
+        oldcwd = os.getcwd()
+        os.chdir(name)
+        print(f'updating {name} {source}')
+        print('  fetching...')
         os.system('git fetch')
-        if eval_git_command('log --remotes --not --branches --oneline'):
+        behind = eval_git_command('log --remotes --not --branches --oneline',
+                                  count)
+        print(f'  commits behind: {behind}')
+        if behind:
           if not eval_git_command('status --porcelain'):
             os.system('git pull --rebase')
+          else:
+            print('  can\'t pull in a dirty repo')
+        os.chdir(oldcwd)
     elif source.startswith('symlink://'):
       if not os.path.exists(name):
         os.system(f'ln -s {source[10:]} {name}')
